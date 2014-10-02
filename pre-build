@@ -38,7 +38,7 @@ docker commit $idWithPublicKeys $IMAGE > /dev/null
 
 # 4. Add key to ssh agent
 # start the ssh-agent in the background
-idWithSSHAgent=$(docker run -i -a stdin $IMAGE /bin/bash -c "eval \"$(ssh-agent -s)\" && ssh-add /app/.ssh/id_rsa")
+idWithSSHAgent=$(docker run -i -a stdin $IMAGE /bin/bash -c "ssh-agent -s && ssh-add /app/.ssh/id_rsa")
 test $(docker wait $idWithSSHAgent) -eq 0
 docker commit $idWithSSHAgent $IMAGE > /dev/null
 
