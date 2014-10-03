@@ -22,19 +22,20 @@ fi
 echo "-----> Installing $KEYTYPE SSH keys in build environment ..."
 
 # 1. Create the .ssh folder
-# id=$(docker run -i -a stdin $IMAGE /bin/bash -c "mkdir -p /app/.ssh")
-# test $(docker wait $id) -eq 0
-# docker commit $id $IMAGE > /dev/null
+id=$(docker run -i -a stdin $IMAGE /bin/bash -c "mkdir -p ~/.ssh")
+test $(docker wait $id) -eq 0
+docker commit $id $IMAGE > /dev/null
 
 # 2. Transfer the app specific private key to the container
-# idWithKeys=$(cat "$FINAL_SSH_FOLDER/id_rsa" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > /app/.ssh/id_rsa && chmod 600 /app/.ssh/id_rsa")
-# test $(docker wait $idWithKeys) -eq 0
-# docker commit $idWithKeys $IMAGE > /dev/null
+idWithKeys=$(cat "$FINAL_SSH_FOLDER/id_rsa" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa")
+test $(docker wait $idWithKeys) -eq 0
+docker commit $idWithKeys $IMAGE > /dev/null
 
 # 3. Transfer the app specific public key to the container
-# idWithPublicKeys=$(cat "$FINAL_SSH_FOLDER/id_rsa.pub" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > /app/.ssh/id_rsa.pub && chmod 600 /app/.ssh/id_rsa && chmod 644 /app/.ssh/id_rsa.pub && chown -R 1001:1001 /app/.ssh")
-# test $(docker wait $idWithPublicKeys) -eq 0
-# docker commit $idWithPublicKeys $IMAGE > /dev/null
+# idWithPublicKeys=$(cat "$FINAL_SSH_FOLDER/id_rsa.pub" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > ~/.ssh/id_rsa.pub && chmod 600 ~/.ssh/id_rsa && chmod 644 ~/.ssh/id_rsa.pub && chown -R 1001:1001 ~/.ssh")
+idWithPublicKeys=$(cat "$FINAL_SSH_FOLDER/id_rsa.pub" | docker run -i -a stdin $IMAGE /bin/bash -c "cat > ~/.ssh/id_rsa.pub && chmod 600 ~/.ssh/id_rsa && chmod 644 ~/.ssh/id_rsa.pub")
+test $(docker wait $idWithPublicKeys) -eq 0
+docker commit $idWithPublicKeys $IMAGE > /dev/null
 
 # 4. Add key to ssh agent
 # start the ssh-agent in the background
