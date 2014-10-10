@@ -13,24 +13,24 @@ APP_SPECIFIC_KEY_FOLDER="$DOKKU_ROOT/.deployment-keys/$APP/.ssh"
 SHARED_KEY_FOLDER="$DOKKU_ROOT/.deployment-keys/shared/.ssh"
 SOURCE_ENV_PATH="$HOME/$APP/ENV"
 
-echo "-----> Checking Deployment Keys Plugin sanity ..."
+info "-----> Checking Deployment Keys Plugin sanity ..."
 bash $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/install
-echo "-----> Installing Deployment Keys in build environment ..."
+info "-----> Installing Deployment Keys in build environment ..."
 
 if [[ -f "$APP_SPECIFIC_KEY_FOLDER/id_rsa" ]]; then
   FINAL_SSH_FOLDER="$APP_SPECIFIC_KEY_FOLDER"
   KEYTYPE="app specific"
-  echo "       App specific keys available. Adding."
+  info "       App specific keys available. Adding."
 elif [[ -f "$SHARED_KEY_FOLDER/id_rsa" ]]; then
   FINAL_SSH_FOLDER="$SHARED_KEY_FOLDER"
   KEYTYPE="shared"
-  echo "       Adding shared keys."
+  info "       Adding shared keys."
 else
-  echo "       No Deployment Keys available."
+  info "       No Deployment Keys available."
 fi
 
 if ([[ ! -z "$KEYTYPE" ]]); then
-  echo "-----> Installing $KEYTYPE SSH keys in build environment ..."
+  info "-----> Installing $KEYTYPE SSH keys in build environment ..."
   
   # 1. Create the .ssh folder
   id=$(docker run -i -a stdin $IMAGE /bin/bash -c "mkdir -p -m 700 /app/.ssh")
@@ -52,9 +52,9 @@ if ([[ ! -z "$KEYTYPE" ]]); then
   test $(docker wait $idWithConfig) -eq 0
   docker commit $idWithConfig $IMAGE > /dev/null
   
-  echo "-----> Done Installing Deployment Keys in build environment ..."
-  echo "       Added the following keys:"
-  echo "       $KEYTYPE"
+  info "-----> Done Installing Deployment Keys in build environment ..."
+  info "       Added the following keys:"
+  info "       $KEYTYPE"
 else
-  echo "       No Deployment Keys found. Continuing ..."
+  info "       No Deployment Keys found. Continuing ..."
 fi
