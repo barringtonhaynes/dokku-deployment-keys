@@ -1,28 +1,38 @@
 #!/usr/bin/env bash
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
-APP="$1"; IMAGE="dokku/$APP"
+APP="$1";
+
+if ([[ -f "$(dirname $0)/../dokku_common" ]]); then
+  source "$(dirname $0)/../dokku_common"
+fi
+
+[ `declare -f -F check_app_name` ] && check_app_name "$APP" || IMAGE="dokku/$APP" 
+
 APP_SPECIFIC_KEY_FOLDER="$DOKKU_ROOT/.deployment-keys/$APP/.ssh"
 SHARED_KEY_FOLDER="$DOKKU_ROOT/.deployment-keys/shared/.ssh"
 SOURCE_ENV_PATH="$HOME/$APP/ENV"
 
 echo "-----> Checking deploymentkeys Plugin sanity ..."
 bash $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/install
+echo "-----> Installing deploymentkeys in build environment ..."
 
 if [[ -f "$APP_SPECIFIC_KEY_FOLDER/id_rsa" ]]; then
     FINAL_SSH_FOLDER="$APP_SPECIFIC_KEY_FOLDER"
     KEYTYPE="app specific"
+    echo "       App specific keys available. Adding."
   else
     if [[ -f "$SHARED_KEY_FOLDER/id_rsa" ]]; then
       FINAL_SSH_FOLDER="$SHARED_KEY_FOLDER"
       KEYTYPE="shared"
+      echo "       Adding shared keys."
     fi
 fi
 
 echo "-----> Installing $KEYTYPE SSH keys in build environment ..."
 
 # 1. Create the .ssh folder
-id=$(docker run -i -a stdin $IMAGE /bin/bash -c "mkdir -p /app/.ssh")
+id=$(docker run -i -a stdin $IMAGE /bin/bash -c "mkdir -p -m 700 /app/.ssh")
 test $(docker wait $id) -eq 0
 docker commit $id $IMAGE > /dev/null
 
@@ -40,3 +50,7 @@ docker commit $idWithPublicKeys $IMAGE > /dev/null
 idWithConfig=$(echo "IdentityFile /app/.ssh/id_rsa" | docker run -i -a stdin $IMAGE /bin/bash -c "cat >> /etc/ssh/ssh_config" )
 test $(docker wait $idWithConfig) -eq 0
 docker commit $idWithConfig $IMAGE > /dev/null
+
+echo "-----> Done Installing Deployment Keys in build environment ..."
+echo "       Added the following keys:"
+echo "       $KEYTYPE"
